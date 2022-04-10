@@ -1,0 +1,4 @@
+<resources>
+    <string name="accessibility_name">自动按键</string>
+    <string name="accessibility_description">提示：打开开关时会收到系统例行风险提示，点击“确认”即可，本应用不屑收集任何隐私数据。</string>
+</resources>
