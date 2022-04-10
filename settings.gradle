@@ -14,3 +14,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "AutoPress"
 include ':app'
+include ':accessibilityservice'
