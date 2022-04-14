@@ -2,7 +2,6 @@ package org.caojun.library.accessibilityservice
 
 import android.accessibilityservice.AccessibilityService
 import android.annotation.SuppressLint
-import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -17,19 +16,32 @@ class MainAccessibilityService : AccessibilityService() {
         private var mainManager: MainManager? = null
 
         fun isDestroyed(): Boolean {
-            return mainManager == null
+            return mainManager == null || mainManager?.isDestroyed() == true
         }
     }
 
     override fun onServiceConnected() {
         super.onServiceConnected()
         mainManager = MainManager(object : MainManager.Listener {
-            override fun onFound(view: AccessibilityNodeInfo) {
-                val text = "Click: ${view.viewIdResourceName} | ${view.text}"
+            override fun onFound(
+                view: AccessibilityNodeInfo?,
+                typeCompare: String,
+                keyCompare: String
+            ) {
+                val text = "Click: ${view?.viewIdResourceName} | ${view?.text} | $typeCompare | $keyCompare"
                 Log.d("onAccessibilityEvent", text)
-                Handler(Looper.getMainLooper()).post {
-                    Toast.makeText(this@MainAccessibilityService, text, Toast.LENGTH_LONG).show()
-                }
+//                Handler(Looper.getMainLooper()).post {
+//                    Toast.makeText(this@MainAccessibilityService, text, Toast.LENGTH_LONG).show()
+//                }
+            }
+
+            override fun onPressFailed(
+                view: AccessibilityNodeInfo?,
+                typeCompare: String,
+                keyCompare: String
+            ) {
+                val text = "onPressFailed: ${view?.viewIdResourceName} | ${view?.text} | $typeCompare | $keyCompare"
+                Log.d("onAccessibilityEvent", text)
             }
         })
         mainManager?.onCreate(this)
@@ -39,11 +51,11 @@ class MainAccessibilityService : AccessibilityService() {
         mainManager?.onAccessibilityEvent(event)
     }
 
-    override fun onUnbind(intent: Intent?): Boolean {
-        mainManager?.onDestroy()
-        mainManager = null
-        return super.onUnbind(intent)
-    }
+//    override fun onUnbind(intent: Intent?): Boolean {
+//        mainManager?.onDestroy()
+//        mainManager = null
+//        return super.onUnbind(intent)
+//    }
 
     override fun onInterrupt() {
     }
