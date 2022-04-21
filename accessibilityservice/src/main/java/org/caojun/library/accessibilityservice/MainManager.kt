@@ -193,6 +193,10 @@ class MainManager(private val listener: Listener? = null) {
                     found = true
                     listener?.onFound(view, "click", TYPE_ID, key)
                 }
+                click(view.parent) -> {
+                    found = true
+                    listener?.onFound(view, "clickParent", TYPE_ID, key)
+                }
                 else -> {
                     listener?.onPressFailed(view, TYPE_ID, key)
                 }
