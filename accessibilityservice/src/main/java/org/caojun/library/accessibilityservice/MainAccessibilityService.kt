@@ -32,9 +32,9 @@ class MainAccessibilityService : AccessibilityService() {
             ) {
                 val text = "Click.$action: ${view?.viewIdResourceName} | ${view?.text} | $typeCompare | $keyCompare | ${view?.className}"
                 Log.d("onAccessibilityEvent", text)
-                Handler(Looper.getMainLooper()).post {
-                    Toast.makeText(this@MainAccessibilityService, text, Toast.LENGTH_LONG).show()
-                }
+//                Handler(Looper.getMainLooper()).post {
+//                    Toast.makeText(this@MainAccessibilityService, text, Toast.LENGTH_LONG).show()
+//                }
             }
 
             override fun onPressFailed(

@@ -185,13 +185,13 @@ class MainManager(private val listener: Listener? = null) {
         var found = false
         if (!view.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
             when {
-                click(view) -> {
-                    found = true
-                    listener?.onFound(view, "click", TYPE_ID, key)
-                }
                 view.parent?.performAction(AccessibilityNodeInfo.ACTION_CLICK) == true -> {
                     found = true
                     listener?.onFound(view.parent, "parent", TYPE_ID, key)
+                }
+                click(view) -> {
+                    found = true
+                    listener?.onFound(view, "click", TYPE_ID, key)
                 }
                 else -> {
                     listener?.onPressFailed(view, TYPE_ID, key)
