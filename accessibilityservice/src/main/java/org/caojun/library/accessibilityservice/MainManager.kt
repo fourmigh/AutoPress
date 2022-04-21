@@ -1,8 +1,12 @@
 package org.caojun.library.accessibilityservice
 
 import android.accessibilityservice.AccessibilityService
+import android.accessibilityservice.GestureDescription
+import android.accessibilityservice.GestureDescription.StrokeDescription
+import android.graphics.Path
 import android.graphics.PixelFormat
 import android.graphics.Rect
+import android.os.Build
 import android.os.SystemClock
 import android.text.TextUtils
 import android.util.DisplayMetrics
@@ -30,7 +34,7 @@ class MainManager(private val listener: Listener? = null) {
     }
 
     interface Listener {
-        fun onFound(view: AccessibilityNodeInfo?, typeCompare: String, keyCompare: String)
+        fun onFound(view: AccessibilityNodeInfo?, action: String, typeCompare: String, keyCompare: String)
         fun onPressFailed(view: AccessibilityNodeInfo?, typeCompare: String, keyCompare: String)
     }
 
@@ -81,6 +85,10 @@ class MainManager(private val listener: Listener? = null) {
             while (isRunning) {
                 SystemClock.sleep(500)
                 researchView()
+                val time = (System.currentTimeMillis() / 1000).toInt()
+                if (time % 10 == 0) {
+                    Log.d("onAccessibilityEvent", "ResearchThread")
+                }
             }
         }
     }
@@ -94,18 +102,19 @@ class MainManager(private val listener: Listener? = null) {
                 continue
             }
             for (view in list) {
-                if (!view.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
-                    if (view.parent.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
-                        found = true
-//                        Log.d("onAccessibilityEvent", "parent.searchView: ${view.parent.text}")
-                        listener?.onFound(view.parent, TYPE_TEXT, key)
-                    }
-                } else {
-                    found = true
-//                    Log.d("onAccessibilityEvent", "searchView: ${view.text}")
-                    listener?.onFound(view, TYPE_TEXT, key)
-                }
-                view.recycle()
+                found = clickView(view, key)
+//                if (!view.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
+//                    if (view.parent.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
+//                        found = true
+////                        Log.d("onAccessibilityEvent", "parent.searchView: ${view.parent.text}")
+//                        listener?.onFound(view.parent, TYPE_TEXT, key)
+//                    }
+//                } else {
+//                    found = true
+////                    Log.d("onAccessibilityEvent", "searchView: ${view.text}")
+//                    listener?.onFound(view, TYPE_TEXT, key)
+//                }
+//                view.recycle()
             }
         }
         return found
@@ -126,20 +135,21 @@ class MainManager(private val listener: Listener? = null) {
             if (!TextUtils.isEmpty(text)) {
                 for (key in KEYS_TEXT) {
                     if (text.contains(key)) {
-                        if (!view.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
-                            if (view.parent?.performAction(AccessibilityNodeInfo.ACTION_CLICK) == true) {
-                                found = true
-//                            Log.d("onAccessibilityEvent", "parent.researchView: $idResourceName")
-                                listener?.onFound(view.parent, TYPE_TEXT, key)
-                            } else {
-                                listener?.onPressFailed(view, TYPE_TEXT, key)
-                            }
-                        } else {
-                            found = true
-//                        Log.d("onAccessibilityEvent", "researchView: $idResourceName")
-                            listener?.onFound(view, TYPE_TEXT, key)
-                        }
-                        view.recycle()
+                        found = clickView(view, key)
+//                        if (!view.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
+//                            if (view.parent?.performAction(AccessibilityNodeInfo.ACTION_CLICK) == true) {
+//                                found = true
+////                            Log.d("onAccessibilityEvent", "parent.researchView: $idResourceName")
+//                                listener?.onFound(view.parent, TYPE_TEXT, key)
+//                            } else {
+//                                listener?.onPressFailed(view, TYPE_TEXT, key)
+//                            }
+//                        } else {
+//                            found = true
+////                        Log.d("onAccessibilityEvent", "researchView: $idResourceName")
+//                            listener?.onFound(view, TYPE_TEXT, key)
+//                        }
+//                        view.recycle()
                     }
                 }
             }
@@ -150,24 +160,66 @@ class MainManager(private val listener: Listener? = null) {
             }
             for (key in KEYS_ID) {
                 if (idResourceName.contains(key)) {
-                    if (!view.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
-                        if (view.parent?.performAction(AccessibilityNodeInfo.ACTION_CLICK) == true) {
-                            found = true
-//                            Log.d("onAccessibilityEvent", "parent.researchView: $idResourceName")
-                            listener?.onFound(view.parent, TYPE_ID, key)
-                        } else {
-                            listener?.onPressFailed(view, TYPE_ID, key)
-                        }
-                    } else {
-                        found = true
-//                        Log.d("onAccessibilityEvent", "researchView: $idResourceName")
-                        listener?.onFound(view, TYPE_ID, key)
-                    }
-                    view.recycle()
+                    found = clickView(view, key)
+//                    if (!view.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
+//                        if (view.parent?.performAction(AccessibilityNodeInfo.ACTION_CLICK) == true) {
+//                            found = true
+////                            Log.d("onAccessibilityEvent", "parent.researchView: $idResourceName")
+//                            listener?.onFound(view.parent, TYPE_ID, key)
+//                        } else {
+//                            listener?.onPressFailed(view, TYPE_ID, key)
+//                        }
+//                    } else {
+//                        found = true
+////                        Log.d("onAccessibilityEvent", "researchView: $idResourceName")
+//                        listener?.onFound(view, TYPE_ID, key)
+//                    }
+//                    view.recycle()
                 }
             }
         }
         return found
+    }
+
+    private fun clickView(view: AccessibilityNodeInfo, key: String): Boolean {
+        var found = false
+        if (!view.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
+            when {
+                click(view) -> {
+                    found = true
+                    listener?.onFound(view, "click", TYPE_ID, key)
+                }
+                view.parent?.performAction(AccessibilityNodeInfo.ACTION_CLICK) == true -> {
+                    found = true
+                    listener?.onFound(view.parent, "parent", TYPE_ID, key)
+                }
+                else -> {
+                    listener?.onPressFailed(view, TYPE_ID, key)
+                }
+            }
+        } else {
+            found = true
+            listener?.onFound(view, "performAction", TYPE_ID, key)
+        }
+        view.recycle()
+        return found
+    }
+
+    private fun click(view: AccessibilityNodeInfo): Boolean {
+        val rect = Rect()
+        view.getBoundsInScreen(rect)
+        return click(rect.centerX(), rect.centerY(), 0, 200)
+    }
+    private fun click(x: Int, y: Int, start_time: Long, duration: Long): Boolean {
+        val path = Path()
+        path.moveTo(x.toFloat(), y.toFloat())
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            val builder = GestureDescription.Builder()
+                .addStroke(StrokeDescription(path, start_time, duration))
+            service?.dispatchGesture(builder.build(), null, null) ?: false
+        } else {
+            false
+        }
     }
 
     private fun findAllNode(

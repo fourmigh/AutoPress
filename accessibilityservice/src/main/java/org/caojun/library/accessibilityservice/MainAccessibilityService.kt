@@ -2,6 +2,7 @@ package org.caojun.library.accessibilityservice
 
 import android.accessibilityservice.AccessibilityService
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -25,14 +26,15 @@ class MainAccessibilityService : AccessibilityService() {
         mainManager = MainManager(object : MainManager.Listener {
             override fun onFound(
                 view: AccessibilityNodeInfo?,
+                action: String,
                 typeCompare: String,
                 keyCompare: String
             ) {
-                val text = "Click: ${view?.viewIdResourceName} | ${view?.text} | $typeCompare | $keyCompare"
+                val text = "Click.$action: ${view?.viewIdResourceName} | ${view?.text} | $typeCompare | $keyCompare | ${view?.className}"
                 Log.d("onAccessibilityEvent", text)
-//                Handler(Looper.getMainLooper()).post {
-//                    Toast.makeText(this@MainAccessibilityService, text, Toast.LENGTH_LONG).show()
-//                }
+                Handler(Looper.getMainLooper()).post {
+                    Toast.makeText(this@MainAccessibilityService, text, Toast.LENGTH_LONG).show()
+                }
             }
 
             override fun onPressFailed(
@@ -40,7 +42,7 @@ class MainAccessibilityService : AccessibilityService() {
                 typeCompare: String,
                 keyCompare: String
             ) {
-                val text = "onPressFailed: ${view?.viewIdResourceName} | ${view?.text} | $typeCompare | $keyCompare"
+                val text = "onPressFailed: ${view?.viewIdResourceName} | ${view?.text} | $typeCompare | $keyCompare | ${view?.className}"
                 Log.d("onAccessibilityEvent", text)
             }
         })
@@ -48,15 +50,18 @@ class MainAccessibilityService : AccessibilityService() {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        Log.d("onAccessibilityEvent", "onAccessibilityEvent")
         mainManager?.onAccessibilityEvent(event)
     }
 
-//    override fun onUnbind(intent: Intent?): Boolean {
+    override fun onUnbind(intent: Intent?): Boolean {
 //        mainManager?.onDestroy()
 //        mainManager = null
-//        return super.onUnbind(intent)
-//    }
+        Log.d("onAccessibilityEvent", "onUnbind")
+        return super.onUnbind(intent)
+    }
 
     override fun onInterrupt() {
+        Log.d("onAccessibilityEvent", "onInterrupt")
     }
 }
